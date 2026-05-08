@@ -1,0 +1,4 @@
+pydriller
+PyGithub
+pandas
+python-dotenv
