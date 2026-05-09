@@ -2,3 +2,4 @@ pydriller
 PyGithub
 pandas
 python-dotenv
+ipykernel
