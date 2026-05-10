@@ -3,3 +3,5 @@ PyGithub
 pandas
 python-dotenv
 ipykernel
+matplotlib
+seaborn
