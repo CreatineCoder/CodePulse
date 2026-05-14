@@ -6,3 +6,7 @@ ipykernel
 matplotlib
 seaborn
 numpy
+scikit-learn
+lightgbm
+shap
+joblib
