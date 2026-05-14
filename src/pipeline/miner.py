@@ -142,16 +142,26 @@ def mine_issues(repo_name: str) -> pd.DataFrame:
 
 
 def save_to_sqlite(
-    events_df, pr_df, pr_commits_df, issue_df, commit_issues_df, db_path: str
+    events_df, pr_df, pr_commits_df, issue_df, commit_issues_df, db_path: str, repo_name: str
 ):
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     conn = sqlite3.connect(db_path)
 
-    events_df.to_sql("events", conn, if_exists="replace", index=False)
-    pr_df.to_sql("pull_requests", conn, if_exists="replace", index=False)
-    pr_commits_df.to_sql("pr_commits", conn, if_exists="replace", index=False)
-    issue_df.to_sql("issues", conn, if_exists="replace", index=False)
-    commit_issues_df.to_sql("commit_issues", conn, if_exists="replace", index=False)
+    # Remove existing rows for this repo before appending (idempotent re-runs)
+    existing = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    for table in ("events", "pull_requests", "pr_commits", "issues", "commit_issues"):
+        if table in existing:
+            conn.execute(f"DELETE FROM {table} WHERE repo = ?", (repo_name,))
+    conn.commit()
+
+    for df in (events_df, pr_df, pr_commits_df, issue_df, commit_issues_df):
+        df["repo"] = repo_name
+
+    events_df.to_sql("events", conn, if_exists="append", index=False)
+    pr_df.to_sql("pull_requests", conn, if_exists="append", index=False)
+    pr_commits_df.to_sql("pr_commits", conn, if_exists="append", index=False)
+    issue_df.to_sql("issues", conn, if_exists="append", index=False)
+    commit_issues_df.to_sql("commit_issues", conn, if_exists="append", index=False)
 
     conn.close()
     print(f"Saved to {db_path}")
@@ -179,7 +189,7 @@ def run(repo_url: str):
 
     print("  [4/4] Saving to SQLite...")
     save_to_sqlite(
-        events_df, pr_df, pr_commits_df, issue_df, commit_issues_df, DB_PATH
+        events_df, pr_df, pr_commits_df, issue_df, commit_issues_df, DB_PATH, repo_name
     )
 
     return events_df, pr_df, pr_commits_df, issue_df, commit_issues_df
