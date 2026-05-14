@@ -10,3 +10,5 @@ scikit-learn
 lightgbm
 shap
 joblib
+fastapi
+uvicorn[standard]
